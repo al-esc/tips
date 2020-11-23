@@ -1,0 +1,27 @@
+{
+  "name": "al-esc/tips",
+  "type": "wordpress-plugin",
+  "description": "TIPS is plugin scaffolding",
+  "keywords": [
+    "wordpress",
+    "plugin"
+  ],
+  "support": {
+    "email": "me@alesc.dev"
+  },
+  "authors": [
+    {
+      "name": "Al Esc",
+      "email": "me@alesc.dev",
+      "homepage": "https://alesc.dev"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "Tips\\": "app/"
+    }
+  },
+  "require": {
+    "php": ">=7.0.0"
+  }
+}
