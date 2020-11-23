@@ -1,0 +1,58 @@
+name: Build release artifact
+
+on:
+  release:
+    types:
+      - created
+
+env:
+  REPO_NAME: ${{ GITHUB_REPOSITORY }} | cut -d'/' -f 2
+
+jobs:
+  dist_linux:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Get Composer Cache Directory
+      id: composer-cache
+      run: |
+        echo "::set-output name=dir::$(composer config cache-files-dir)"
+    - name: Cache Composer Downloads
+      uses: actions/cache@v1
+      with:
+        path: ${{ steps.composer-cache.outputs.dir }}
+        key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-composer-
+    - name: Install PHP dependencies
+      id: composer-install
+      run: composer install --no-dev
+    - name: Cache PHP dependencies
+      uses: actions/cache@v1
+      with:
+        path: vendor
+        key: ${{ runner.OS }}-build-${{ hashFiles('**/composer.lock') }}
+    - name: Dump autoload files
+      id: composer-dump
+      run: composer dump-autoload -o
+    - name: Install NPM dependencies
+      id: npm-install
+      run: npm install
+    - name: Build production assets
+      id: npm-build
+      run: npm run prod
+    - name: Remove misc files
+      id: remove-misc
+      run: rm -rf node_modules/ assets/ README.md .git/ .github/ .gitignore composer.lock composer.json package.json package-lock.json phpcs.xml webpack.mix.js
+    - name: Build artifact
+      id: build-artifact
+      run: zip --junk-paths ../$REPO_NAME
+    - name: Upload artifact
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ../$REPO_NAME.zip
+        asset_name: $REPO_NAME.zip
+        asset_content_type: application/zip
